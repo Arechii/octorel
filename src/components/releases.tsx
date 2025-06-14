@@ -59,6 +59,16 @@ export const Releases = async ({ token }: { token: string }) => {
     }),
   );
 
+  latestReleases.sort((a, b) => {
+    if (!a.release && !b.release) return 0;
+    if (!a.release) return 1;
+    if (!b.release) return -1;
+    return (
+      new Date(b.release.created_at).getTime() -
+      new Date(a.release.created_at).getTime()
+    );
+  });
+
   return (
     <div className="flex flex-col gap-4">
       {latestReleases.map((r) => (
