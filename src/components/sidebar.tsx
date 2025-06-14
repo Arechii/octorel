@@ -13,7 +13,7 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
     : repositories;
 
   return (
-    <Card className="sticky top-2 flex h-[800px] w-48 gap-0 overflow-y-auto p-0">
+    <Card className="sticky top-2 flex h-[800px] w-48 gap-0 p-0">
       <CardHeader className="w-full p-2">
         <Input
           value={filter}
@@ -21,7 +21,7 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
           placeholder="search..."
         />
       </CardHeader>
-      <CardContent className="flex flex-col px-4 pb-4">
+      <CardContent className="flex flex-col overflow-y-auto px-4 pb-4">
         {filtered.map((r) => (
           <span
             key={r.id}
