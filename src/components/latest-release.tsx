@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Octokit } from "octokit";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { getRelativeTime } from "~/lib/utils";
 import type { Starred } from "./releases";
 import { Avatar, AvatarImage } from "./ui/avatar";
@@ -76,7 +77,9 @@ export const LatestRelease = async ({
       <CardContent className="flex flex-col gap-4">
         <span className="text-2xl font-extrabold">{latest?.name}</span>
         <div className="prose prose-zinc rounded-xl bg-neutral-100 p-4">
-          <ReactMarkdown>{latest?.body ?? "*No releases*"}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {latest?.body ?? "*No releases*"}
+          </ReactMarkdown>
         </div>
       </CardContent>
       {latest?.reactions && (
