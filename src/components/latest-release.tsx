@@ -75,7 +75,13 @@ export const LatestRelease = async ({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <span className="text-2xl font-extrabold">{latest?.name}</span>
+        <Link
+          className="text-2xl font-extrabold"
+          href={latest?.html_url ?? ""}
+          target="_blank"
+        >
+          {latest?.name}
+        </Link>
         <div className="prose prose-zinc rounded-xl bg-neutral-100 p-4">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {latest?.body ?? "*No releases*"}
