@@ -1,9 +1,8 @@
 import Link from "next/link";
-import type { Octokit } from "octokit";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getRelativeTime } from "~/lib/utils";
-import type { Starred } from "./releases";
+import type { Release, Repository } from "./releases";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import {
@@ -25,50 +24,27 @@ const reactionMap = {
   rocket: "🚀",
 } as const;
 
-const getLatest = async (octokit: Octokit, owner: string, repo: string) => {
-  const response = await octokit.request(
-    "GET /repos/{owner}/{repo}/releases/latest",
-    {
-      owner,
-      repo,
-      headers: {
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    },
-  );
-
-  return response.data;
-};
-
-type Latest = Awaited<ReturnType<typeof getLatest>>;
-
 export const LatestRelease = async ({
-  octokit,
-  star,
+  repository,
+  release,
 }: {
-  octokit: Octokit;
-  star: Starred[number];
+  repository: Repository;
+  release: Release | null;
 }) => {
-  let latest: Latest | null = null;
-
-  try {
-    latest = await getLatest(octokit, star.owner.login, star.name);
-  } catch {}
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-4">
           <Avatar className="size-12">
-            <AvatarImage src={star.owner.avatar_url} />
+            <AvatarImage src={repository.owner.avatar_url} />
           </Avatar>
           <div className="flex flex-col gap-1">
-            <Link href={star.html_url} target="_blank">
-              {star.name}
+            <Link href={repository.html_url} target="_blank">
+              {repository.name}
             </Link>
-            {latest && (
+            {release && (
               <span className="text-muted-foreground text-sm">
-                {getRelativeTime(new Date(latest.created_at))}
+                {getRelativeTime(new Date(release.created_at))}
               </span>
             )}
           </div>
@@ -77,20 +53,20 @@ export const LatestRelease = async ({
       <CardContent className="flex flex-col gap-4">
         <Link
           className="text-2xl font-extrabold"
-          href={latest?.html_url ?? ""}
+          href={release?.html_url ?? ""}
           target="_blank"
         >
-          {latest?.name}
+          {release?.name}
         </Link>
         <div className="prose prose-zinc rounded-xl bg-neutral-100 p-4">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {latest?.body ?? "*No releases*"}
+            {release?.body ?? "*No releases*"}
           </ReactMarkdown>
         </div>
       </CardContent>
-      {latest?.reactions && (
+      {release?.reactions && (
         <CardFooter className="gap-1">
-          {Object.entries(latest.reactions)
+          {Object.entries(release.reactions)
             .filter(
               (e) =>
                 e[0] in reactionMap && typeof e[1] === "number" && e[1] > 0,
