@@ -1,5 +1,6 @@
 import { Octokit } from "octokit";
 import { LatestRelease } from "./latest-release";
+import { Sidebar } from "./sidebar";
 
 const getStarredPage = async (octokit: Octokit, page: number) => {
   const response = await octokit.request("GET /user/starred", {
@@ -70,14 +71,17 @@ export const Releases = async ({ token }: { token: string }) => {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      {latestReleases.map((r) => (
-        <LatestRelease
+    <div className="flex gap-24">
+      <Sidebar repositories={latestReleases.map((l) => l.repository)} />
+      <div className="flex flex-col gap-4">
+        {latestReleases.map((r) => (
+          <LatestRelease
           key={r.repository.id}
           repository={r.repository}
-          release={r.release}
-        />
-      ))}
+            release={r.release}
+          />
+        ))}
+      </div>
     </div>
   );
 };
