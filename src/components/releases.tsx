@@ -1,4 +1,5 @@
 import { Octokit } from "octokit";
+import { LatestRelease } from "./latest-release";
 
 const getStarredPage = async (octokit: Octokit, page: number) => {
   const response = await octokit.request("GET /user/starred", {
@@ -13,7 +14,7 @@ const getStarredPage = async (octokit: Octokit, page: number) => {
   return response.data;
 };
 
-type Starred = Awaited<ReturnType<typeof getStarredPage>>;
+export type Starred = Awaited<ReturnType<typeof getStarredPage>>;
 
 export const Releases = async ({ token }: { token: string }) => {
   const octokit = new Octokit({ auth: token });
@@ -28,10 +29,10 @@ export const Releases = async ({ token }: { token: string }) => {
   } while (result.length === 100);
 
   return (
-    <div className="flex flex-col gap-2">
-      {starred.map((d) => {
-        return <div key={d.id}>{d.html_url}</div>;
-      })}
+    <div className="flex flex-col gap-4">
+      {starred.map((s) => (
+        <LatestRelease key={s.id} octokit={octokit} star={s} />
+      ))}
     </div>
   );
 };
