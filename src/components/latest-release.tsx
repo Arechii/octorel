@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Octokit } from "octokit";
 import ReactMarkdown from "react-markdown";
 import { getRelativeTime } from "~/lib/utils";
@@ -61,7 +62,9 @@ export const LatestRelease = async ({
             <AvatarImage src={star.owner.avatar_url} />
           </Avatar>
           <div className="flex flex-col gap-1">
-            <span>{star.name}</span>
+            <Link href={star.html_url} target="_blank">
+              {star.name}
+            </Link>
             {latest && (
               <span className="text-muted-foreground text-sm">
                 {getRelativeTime(new Date(latest.created_at))}
