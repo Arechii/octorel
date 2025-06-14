@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { getRelativeTime } from "~/lib/utils";
 import type { Starred } from "./releases";
 import { Avatar, AvatarImage } from "./ui/avatar";
+import { Badge } from "./ui/badge";
 import {
   Card,
   CardContent,
@@ -10,6 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+
+const reactionMap = {
+  "+1": "👍",
+  "-1": "👎",
+  laugh: "😄",
+  confused: "😕",
+  heart: "❤️",
+  hooray: "🎉",
+  eyes: "👀",
+  rocket: "🚀",
+} as const;
 
 const getLatest = async (octokit: Octokit, owner: string, repo: string) => {
   const response = await octokit.request(
@@ -64,7 +76,20 @@ export const LatestRelease = async ({
           <ReactMarkdown>{latest?.body ?? "*No releases*"}</ReactMarkdown>
         </div>
       </CardContent>
-      {latest && <CardFooter></CardFooter>}
+      {latest?.reactions && (
+        <CardFooter className="gap-1">
+          {Object.entries(latest.reactions)
+            .filter(
+              (e) =>
+                e[0] in reactionMap && typeof e[1] === "number" && e[1] > 0,
+            )
+            .map((r) => (
+              <Badge key={r[0]} className="gap-1" variant="outline">
+                {reactionMap[r[0] as keyof typeof reactionMap]} {r[1]}
+              </Badge>
+            ))}
+        </CardFooter>
+      )}
     </Card>
   );
 };
