@@ -76,8 +76,8 @@ export const Releases = async ({ token }: { token: string }) => {
       <div className="flex flex-col gap-4">
         {latestReleases.map((r) => (
           <LatestRelease
-          key={r.repository.id}
-          repository={r.repository}
+            key={r.repository.id}
+            repository={r.repository}
             release={r.release}
           />
         ))}
