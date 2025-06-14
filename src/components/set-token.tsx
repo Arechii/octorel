@@ -13,8 +13,13 @@ export const SetToken = ({
   const [token, setToken] = useState("");
 
   return (
-    <div className="flex gap-4">
-      <Input value={token} onChange={(e) => setToken(e.target.value)} />
+    <div className="flex gap-2">
+      <Input
+        className="w-96"
+        placeholder="github token"
+        value={token}
+        onChange={(e) => setToken(e.target.value)}
+      />
       <Button size="icon" onClick={() => apply(token)}>
         <Play />
       </Button>

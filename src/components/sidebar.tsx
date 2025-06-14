@@ -16,9 +16,9 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
     <Card className="sticky top-2 flex h-[800px] w-48 gap-0 p-0">
       <CardHeader className="w-full p-2">
         <Input
+          placeholder="search..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="search..."
         />
       </CardHeader>
       <CardContent className="flex flex-col overflow-y-auto px-4 pb-4">
