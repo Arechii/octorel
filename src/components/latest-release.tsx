@@ -58,7 +58,7 @@ export const LatestRelease = async ({
         >
           {release?.name}
         </Link>
-        <div className="prose prose-zinc rounded-xl bg-neutral-100 p-4">
+        <div className="prose prose-zinc overflow-x-auto rounded-xl bg-neutral-100 p-4">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {release?.body ?? "*No releases*"}
           </ReactMarkdown>
