@@ -2,7 +2,10 @@ import { Octokit } from "octokit";
 import { LatestRelease } from "./latest-release";
 import { Sidebar } from "./sidebar";
 
-const getStarredPage = async (octokit: Octokit, page: number) => {
+const getStarredPage = async (token: string, page: number) => {
+  "use cache";
+
+  const octokit = new Octokit({ auth: token });
   const response = await octokit.request("GET /user/starred", {
     headers: {
       "X-GitHub-Api-Version": "2022-11-28",
@@ -15,11 +18,10 @@ const getStarredPage = async (octokit: Octokit, page: number) => {
   return response.data;
 };
 
-const getLatestRelease = async (
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-) => {
+const getLatestRelease = async (token: string, owner: string, repo: string) => {
+  "use cache";
+
+  const octokit = new Octokit({ auth: token });
   const response = await octokit.request(
     "GET /repos/{owner}/{repo}/releases/latest",
     {
@@ -38,13 +40,12 @@ export type Repository = Awaited<ReturnType<typeof getStarredPage>>[number];
 export type Release = Awaited<ReturnType<typeof getLatestRelease>>;
 
 export const Releases = async ({ token }: { token: string }) => {
-  const octokit = new Octokit({ auth: token });
   const starred = [];
   let page = 1;
   let result: Repository[] = [];
 
   do {
-    result = await getStarredPage(octokit, page);
+    result = await getStarredPage(token, page);
     starred.push(...result);
     page++;
   } while (result.length === 100);
@@ -52,7 +53,7 @@ export const Releases = async ({ token }: { token: string }) => {
   const latestReleases = await Promise.all(
     starred.map(async (s) => {
       try {
-        const release = await getLatestRelease(octokit, s.owner.login, s.name);
+        const release = await getLatestRelease(token, s.owner.login, s.name);
         return { repository: s, release };
       } catch {
         return { repository: s, release: null };

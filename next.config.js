@@ -6,6 +6,9 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  experimental: {
+    useCache: true,
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
