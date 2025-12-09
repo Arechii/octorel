@@ -9,12 +9,6 @@ const config = {
   experimental: {
     useCache: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default config;
