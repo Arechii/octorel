@@ -32,7 +32,7 @@ export const LatestRelease = async ({
   release: Release | null;
 }) => {
   return (
-    <Card id={repository.id.toString()} className="max-w-min">
+    <Card id={repository.id.toString()}>
       <CardHeader>
         <CardTitle className="flex items-center gap-4">
           <Avatar className="size-12">

@@ -13,7 +13,7 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
     : repositories;
 
   return (
-    <Card className="sticky top-2 hidden h-[800px] gap-0 p-0 md:flex">
+    <Card className="sticky top-2 flex h-[800px] gap-0 p-0">
       <CardHeader className="w-full p-2">
         <Input
           placeholder="search..."
