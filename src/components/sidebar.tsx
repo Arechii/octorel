@@ -9,13 +9,16 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
   const [filter, setFilter] = useState("");
 
   const filtered = filter
-    ? repositories.filter((r) => r.name.includes(filter))
+    ? repositories.filter((r) =>
+        r.full_name.toLowerCase().includes(filter.toLowerCase()),
+      )
     : repositories;
 
   return (
-    <Card className="sticky top-2 flex h-[800px] gap-0 p-0">
+    <Card className="sticky top-2 hidden h-[calc(100dvh-1rem)] w-72 gap-0 p-0 lg:flex">
       <CardHeader className="w-full p-2">
         <Input
+          aria-label="Search repositories"
           placeholder="search..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -26,18 +29,15 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
           <button
             key={r.id}
             type="button"
-            className="text-left font-medium hover:cursor-pointer"
+            title={r.full_name}
+            className="truncate text-left font-medium hover:cursor-pointer hover:underline"
             onClick={() => {
-              const el = document.getElementById(r.id.toString());
-              if (el) {
-                const yOffset = -8;
-                const y =
-                  el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                window.scrollTo({ top: y, behavior: "smooth" });
-              }
+              document
+                .getElementById(r.id.toString())
+                ?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            {r.name}
+            {r.full_name}
           </button>
         ))}
       </CardContent>
