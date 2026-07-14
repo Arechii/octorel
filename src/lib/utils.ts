@@ -20,10 +20,9 @@ export function getRelativeTime(date: Date): string {
   ];
 
   for (const [unit, secondsInUnit] of units) {
-    const value = Math.round(diff / secondsInUnit);
-    if (Math.abs(value) >= 1 || unit === "second") {
+    if (Math.abs(diff) >= secondsInUnit || unit === "second") {
       return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
-        value,
+        Math.trunc(diff / secondsInUnit),
         unit,
       );
     }

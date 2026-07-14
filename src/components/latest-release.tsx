@@ -13,42 +13,46 @@ import {
   CardTitle,
 } from "./ui/card";
 
-const reactionMap = {
-  "+1": "👍",
-  "-1": "👎",
-  laugh: "😄",
-  confused: "😕",
-  heart: "❤️",
-  hooray: "🎉",
-  eyes: "👀",
-  rocket: "🚀",
-} as const;
+const reactionMap: Record<string, string> = {
+  THUMBS_UP: "👍",
+  THUMBS_DOWN: "👎",
+  LAUGH: "😄",
+  CONFUSED: "😕",
+  HEART: "❤️",
+  HOORAY: "🎉",
+  EYES: "👀",
+  ROCKET: "🚀",
+};
 
-export const LatestRelease = async ({
+export const LatestRelease = ({
   repository,
   release,
 }: {
   repository: Repository;
   release: Release | null;
 }) => {
+  const reactions =
+    release?.reactions.filter((r) => r.content in reactionMap && r.count > 0) ??
+    [];
+
   return (
-    <Card id={repository.id.toString()} className="scroll-mt-2">
+    <Card id={repository.id} className="scroll-mt-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-4">
           <Avatar className="size-12">
             <AvatarImage
-              src={repository.owner.avatar_url}
+              src={repository.owner.avatarUrl}
               alt={`${repository.owner.login} avatar`}
             />
           </Avatar>
           <div className="flex flex-col gap-1">
-            <Link href={repository.html_url} target="_blank">
-              {repository.full_name}
+            <Link href={repository.url} target="_blank">
+              {repository.fullName}
             </Link>
             {release && (
               <span className="text-muted-foreground text-sm">
                 {getRelativeTime(
-                  new Date(release.published_at ?? release.created_at),
+                  new Date(release.publishedAt ?? release.createdAt),
                 )}
               </span>
             )}
@@ -57,13 +61,18 @@ export const LatestRelease = async ({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {release && (
-          <Link
-            className="font-extrabold text-2xl"
-            href={release.html_url}
-            target="_blank"
-          >
-            {release.name}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              className="font-extrabold text-2xl"
+              href={release.url}
+              target="_blank"
+            >
+              {release.name}
+            </Link>
+            {release.isPrerelease && (
+              <Badge variant="outline">Pre-release</Badge>
+            )}
+          </div>
         )}
         <div className="prose prose-zinc dark:prose-invert overflow-x-auto rounded-xl bg-muted p-4">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -71,18 +80,13 @@ export const LatestRelease = async ({
           </ReactMarkdown>
         </div>
       </CardContent>
-      {release?.reactions && (
+      {reactions.length > 0 && (
         <CardFooter className="gap-1">
-          {Object.entries(release.reactions)
-            .filter(
-              (e) =>
-                e[0] in reactionMap && typeof e[1] === "number" && e[1] > 0,
-            )
-            .map((r) => (
-              <Badge key={r[0]} className="gap-1" variant="outline">
-                {reactionMap[r[0] as keyof typeof reactionMap]} {r[1]}
-              </Badge>
-            ))}
+          {reactions.map((r) => (
+            <Badge key={r.content} className="gap-1" variant="outline">
+              {reactionMap[r.content]} {r.count}
+            </Badge>
+          ))}
         </CardFooter>
       )}
     </Card>

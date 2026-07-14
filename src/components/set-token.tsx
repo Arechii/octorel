@@ -15,9 +15,10 @@ import { Input } from "./ui/input";
 export const SetToken = ({
   apply,
 }: {
-  apply: (token: string) => Promise<void>;
+  apply: (token: string) => Promise<string | null>;
 }) => {
   const [token, setToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   return (
@@ -36,7 +37,9 @@ export const SetToken = ({
             e.preventDefault();
             const trimmed = token.trim();
             if (!trimmed) return;
-            startTransition(() => apply(trimmed));
+            startTransition(async () => {
+              setError(await apply(trimmed));
+            });
           }}
         >
           <Input
@@ -56,6 +59,7 @@ export const SetToken = ({
             {pending ? <Loader2 className="animate-spin" /> : <Play />}
           </Button>
         </form>
+        {error && <p className="text-destructive text-sm">{error}</p>}
         <p className="text-muted-foreground text-sm">
           Create a{" "}
           <a
