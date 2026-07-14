@@ -32,33 +32,40 @@ export const LatestRelease = async ({
   release: Release | null;
 }) => {
   return (
-    <Card id={repository.id.toString()}>
+    <Card id={repository.id.toString()} className="scroll-mt-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-4">
           <Avatar className="size-12">
-            <AvatarImage src={repository.owner.avatar_url} />
+            <AvatarImage
+              src={repository.owner.avatar_url}
+              alt={`${repository.owner.login} avatar`}
+            />
           </Avatar>
           <div className="flex flex-col gap-1">
             <Link href={repository.html_url} target="_blank">
-              {repository.name}
+              {repository.full_name}
             </Link>
             {release && (
               <span className="text-muted-foreground text-sm">
-                {getRelativeTime(new Date(release.created_at))}
+                {getRelativeTime(
+                  new Date(release.published_at ?? release.created_at),
+                )}
               </span>
             )}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Link
-          className="font-extrabold text-2xl"
-          href={release?.html_url ?? ""}
-          target="_blank"
-        >
-          {release?.name}
-        </Link>
-        <div className="prose prose-zinc overflow-x-auto rounded-xl bg-neutral-100 p-4">
+        {release && (
+          <Link
+            className="font-extrabold text-2xl"
+            href={release.html_url}
+            target="_blank"
+          >
+            {release.name}
+          </Link>
+        )}
+        <div className="prose prose-zinc dark:prose-invert overflow-x-auto rounded-xl bg-muted p-4">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {release?.body ?? "*No releases*"}
           </ReactMarkdown>

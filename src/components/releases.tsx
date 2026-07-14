@@ -66,15 +66,15 @@ export const Releases = async ({ token }: { token: string }) => {
     if (!a.release) return 1;
     if (!b.release) return -1;
     return (
-      new Date(b.release.created_at).getTime() -
-      new Date(a.release.created_at).getTime()
+      new Date(b.release.published_at ?? b.release.created_at).getTime() -
+      new Date(a.release.published_at ?? a.release.created_at).getTime()
     );
   });
 
   return (
-    <div className="flex gap-24">
+    <div className="flex w-full justify-center gap-8">
       <Sidebar repositories={latestReleases.map((l) => l.repository)} />
-      <div className="flex flex-col gap-4">
+      <div className="flex w-full min-w-0 max-w-3xl flex-col gap-4">
         {latestReleases.map((r) => (
           <LatestRelease
             key={r.repository.id}
