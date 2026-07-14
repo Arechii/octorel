@@ -1,12 +1,20 @@
 "use client";
 
-import { List, X } from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import { List, Loader2 } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { LatestRelease } from "./latest-release";
 import type { Release, Repository } from "./releases";
 import { RepoList } from "./repo-list";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "./ui/drawer";
 
 const PAGE_SIZE = 25;
 
@@ -39,14 +47,38 @@ export const ReleasesView = ({ items }: { items: ReleaseItem[] }) => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const hasMore = visibleCount < items.length;
 
   useEffect(() => {
     if (!scrollTarget) return;
-    document
-      .getElementById(scrollTarget)
-      ?.scrollIntoView({ behavior: "smooth" });
-    setScrollTarget(null);
+    // Give the drawer's close animation time to release the body scroll
+    // lock before scrolling to the selected card.
+    const timeout = setTimeout(() => {
+      document
+        .getElementById(scrollTarget)
+        ?.scrollIntoView({ behavior: "smooth" });
+      setScrollTarget(null);
+    }, 400);
+    return () => clearTimeout(timeout);
   }, [scrollTarget]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!hasMore || !sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => count + PAGE_SIZE);
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   const select = (id: string) => {
     const index = items.findIndex((i) => i.repository.id === id);
@@ -90,56 +122,39 @@ export const ReleasesView = ({ items }: { items: ReleaseItem[] }) => {
           );
         })}
 
-        {visibleCount < items.length && (
-          <div className="flex flex-col items-center gap-2 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-            >
-              Load more
-            </Button>
-            <span className="text-muted-foreground text-sm">
-              Showing {visible.length} of {items.length} repositories
-            </span>
+        {hasMore && (
+          <div
+            ref={sentinelRef}
+            className="flex items-center justify-center gap-2 py-6 text-muted-foreground text-sm"
+          >
+            <Loader2 className="size-4 animate-spin" />
+            Loading more... ({visible.length} of {items.length})
           </div>
         )}
       </div>
 
-      {drawerOpen && (
-        <div className="fixed inset-0 z-30 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close repository list"
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className="absolute inset-y-0 right-0 flex w-80 max-w-[85vw] flex-col border-l bg-background shadow-lg">
-            <div className="flex items-center justify-between p-2 pl-4">
-              <span className="font-semibold">Repositories</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDrawerOpen(false)}
-                aria-label="Close repository list"
-              >
-                <X />
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1">
-              <RepoList repositories={repositories} onSelect={select} />
-            </div>
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button
+            size="icon"
+            aria-label="Browse repositories"
+            className="fixed right-4 bottom-4 z-20 size-12 rounded-full shadow-lg lg:hidden"
+          >
+            <List />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader className="pb-0">
+            <DrawerTitle>Repositories</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Search and jump to a repository
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="h-[60vh]">
+            <RepoList repositories={repositories} onSelect={select} />
           </div>
-        </div>
-      )}
-
-      <Button
-        size="icon"
-        aria-label="Browse repositories"
-        className="fixed right-4 bottom-4 z-20 size-12 rounded-full shadow-lg lg:hidden"
-        onClick={() => setDrawerOpen(true)}
-      >
-        <List />
-      </Button>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
