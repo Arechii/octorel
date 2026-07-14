@@ -33,16 +33,33 @@ export const GET = async (request: NextRequest) => {
           client_id: env.GITHUB_CLIENT_ID,
           client_secret: env.GITHUB_CLIENT_SECRET,
           code,
+          redirect_uri: new URL("/api/callback", request.nextUrl).toString(),
         }),
       },
     );
 
     if (exchange.ok) {
-      const data = (await exchange.json()) as { access_token?: string };
+      // GitHub responds 200 even on failure, with error details in the body
+      // (e.g. incorrect_client_credentials, bad_verification_code).
+      const data = (await exchange.json()) as {
+        access_token?: string;
+        error?: string;
+        error_description?: string;
+      };
       token = data.access_token;
+
+      if (!token) {
+        console.error(
+          `GitHub token exchange failed: ${data.error ?? "unknown error"} - ${data.error_description ?? "no description"}`,
+        );
+      }
+    } else {
+      console.error(
+        `GitHub token exchange failed with HTTP ${exchange.status}: ${await exchange.text()}`,
+      );
     }
-  } catch {
-    // fall through to the failure redirect
+  } catch (error) {
+    console.error("GitHub token exchange request failed:", error);
   }
 
   if (!token) {
