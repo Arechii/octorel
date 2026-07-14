@@ -10,7 +10,7 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
 
   const filtered = filter
     ? repositories.filter((r) =>
-        r.full_name.toLowerCase().includes(filter.toLowerCase()),
+        r.fullName.toLowerCase().includes(filter.toLowerCase()),
       )
     : repositories;
 
@@ -29,15 +29,15 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
           <button
             key={r.id}
             type="button"
-            title={r.full_name}
+            title={r.fullName}
             className="truncate text-left font-medium hover:cursor-pointer hover:underline"
             onClick={() => {
               document
-                .getElementById(r.id.toString())
+                .getElementById(r.id)
                 ?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            {r.full_name}
+            {r.fullName}
           </button>
         ))}
       </CardContent>
