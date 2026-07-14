@@ -189,7 +189,7 @@ const FetchError = ({ message }: { message: string }) => (
       </Button>
       <form action={clearToken}>
         <Button variant="ghost" type="submit">
-          Use a different token
+          Sign in again
         </Button>
       </form>
     </CardFooter>
