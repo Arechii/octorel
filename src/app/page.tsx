@@ -2,13 +2,18 @@ import { Loader2, LogOut } from "lucide-react";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { Releases } from "~/components/releases";
-import { SetToken } from "~/components/set-token";
+import { SignIn } from "~/components/sign-in";
 import { Button } from "~/components/ui/button";
-import { clearToken, setToken } from "./actions";
+import { clearToken } from "./actions";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get("gh-token")?.value;
+  const { error } = await searchParams;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -38,7 +43,7 @@ export default async function HomePage() {
               <Releases token={token} />
             </Suspense>
           ) : (
-            <SetToken apply={setToken} />
+            <SignIn error={error} />
           )}
         </div>
       </div>
