@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "~/env";
+import { appOrigin } from "~/lib/app-origin";
 
 export const GET = async (request: NextRequest) => {
+  const origin = appOrigin(request);
+
   const fail = (reason: "state" | "exchange") => {
     const response = NextResponse.redirect(
-      new URL(`/?error=${reason}`, request.nextUrl),
+      new URL(`/?error=${reason}`, origin),
     );
     response.cookies.delete("gh-oauth-state");
     return response;
@@ -33,7 +36,7 @@ export const GET = async (request: NextRequest) => {
           client_id: env.GITHUB_CLIENT_ID,
           client_secret: env.GITHUB_CLIENT_SECRET,
           code,
-          redirect_uri: new URL("/api/callback", request.nextUrl).toString(),
+          redirect_uri: `${origin}/api/callback`,
         }),
       },
     );
@@ -66,7 +69,7 @@ export const GET = async (request: NextRequest) => {
     return fail("exchange");
   }
 
-  const response = NextResponse.redirect(new URL("/", request.nextUrl));
+  const response = NextResponse.redirect(new URL("/", origin));
   response.cookies.delete("gh-oauth-state");
   response.cookies.set("gh-token", token, {
     httpOnly: true,

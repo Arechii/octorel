@@ -20,6 +20,8 @@ GITHUB_CLIENT_ID="..."
 GITHUB_CLIENT_SECRET="..."
 ```
 
+The sign-in redirect is built from the origin the request arrives on (honoring `x-forwarded-host` / `x-forwarded-proto`), and that exact origin + `/api/callback` must be registered as a callback URL on the GitHub App. If your proxy doesn't send forwarding headers, or you want to pin a canonical origin, set `APP_URL` (e.g. `https://octorel.example.com`). The server logs the `redirect_uri` it uses on every sign-in attempt.
+
 ## Running locally
 
 ```bash
