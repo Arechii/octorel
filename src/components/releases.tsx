@@ -1,8 +1,7 @@
 import { cacheLife } from "next/cache";
 import { Octokit } from "octokit";
 import { clearToken } from "~/app/actions";
-import { LatestRelease } from "./latest-release";
-import { Sidebar } from "./sidebar";
+import { ReleasesView } from "./releases-view";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -209,7 +208,11 @@ export const Releases = async ({ token }: { token: string }) => {
       cursor = pageInfo.hasNextPage ? pageInfo.endCursor : null;
     } while (cursor);
   } catch (error) {
-    return <FetchError message={describeError(error)} />;
+    return (
+      <div className="flex justify-center py-24">
+        <FetchError message={describeError(error)} />
+      </div>
+    );
   }
 
   const latestReleases = starred.map(toLatestRelease);
@@ -224,18 +227,5 @@ export const Releases = async ({ token }: { token: string }) => {
     );
   });
 
-  return (
-    <div className="flex w-full justify-center gap-8">
-      <Sidebar repositories={latestReleases.map((l) => l.repository)} />
-      <div className="flex w-full min-w-0 max-w-3xl flex-col gap-4">
-        {latestReleases.map((r) => (
-          <LatestRelease
-            key={r.repository.id}
-            repository={r.repository}
-            release={r.release}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <ReleasesView items={latestReleases} />;
 };
