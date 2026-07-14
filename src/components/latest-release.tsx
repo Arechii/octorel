@@ -52,7 +52,7 @@ export const LatestRelease = async ({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <Link
-          className="text-2xl font-extrabold"
+          className="font-extrabold text-2xl"
           href={release?.html_url ?? ""}
           target="_blank"
         >

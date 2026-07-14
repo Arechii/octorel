@@ -23,9 +23,10 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
       </CardHeader>
       <CardContent className="flex flex-col overflow-y-auto px-4 pb-4">
         {filtered.map((r) => (
-          <span
+          <button
             key={r.id}
-            className="font-medium hover:cursor-pointer"
+            type="button"
+            className="text-left font-medium hover:cursor-pointer"
             onClick={() => {
               const el = document.getElementById(r.id.toString());
               if (el) {
@@ -37,7 +38,7 @@ export const Sidebar = ({ repositories }: { repositories: Repository[] }) => {
             }}
           >
             {r.name}
-          </span>
+          </button>
         ))}
       </CardContent>
     </Card>
