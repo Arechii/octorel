@@ -64,6 +64,38 @@ type StarredRepository = NonNullable<
 >;
 
 /**
+ * Collapse an octokit failure into a small typed error. A single GraphQL
+ * response can carry hundreds of per-field errors (e.g. one
+ * RESOURCE_LIMITS_EXCEEDED per node) and octokit joins them all into the
+ * error message — rethrowing that as-is floods server logs.
+ */
+const toCompactError = (error: unknown): Error => {
+  if (typeof error === "object" && error !== null) {
+    if ("errors" in error && Array.isArray(error.errors)) {
+      const types = [
+        ...new Set(
+          error.errors.map((e) =>
+            typeof e === "object" &&
+            e !== null &&
+            "type" in e &&
+            typeof e.type === "string"
+              ? e.type
+              : "UNKNOWN",
+          ),
+        ),
+      ];
+      return new Error(`github-graphql-error:${types.join(",")}`);
+    }
+
+    if ("status" in error && typeof error.status === "number") {
+      return new Error(`github-http-error:${error.status}`);
+    }
+  }
+
+  return new Error("github-request-error");
+};
+
+/**
  * One page of starred repositories together with their most recent releases.
  * A single GraphQL request replaces up to 101 REST calls (1 page listing +
  * 1 "latest release" call per repository).
@@ -74,8 +106,9 @@ const getStarredPage = async (token: string, cursor: string | null) => {
 
   const octokit = new Octokit({ auth: token });
 
-  return octokit.graphql<StarredPage>(
-    `
+  return octokit
+    .graphql<StarredPage>(
+      `
       query starredWithReleases($cursor: String) {
         viewer {
           starredRepositories(
@@ -107,7 +140,7 @@ const getStarredPage = async (token: string, cursor: string | null) => {
                   isPrerelease
                   reactionGroups {
                     content
-                    reactors {
+                    reactors(first: 1) {
                       totalCount
                     }
                   }
@@ -118,29 +151,28 @@ const getStarredPage = async (token: string, cursor: string | null) => {
         }
       }
     `,
-    { cursor },
-  );
+      { cursor },
+    )
+    .catch((error: unknown) => {
+      const compact = toCompactError(error);
+      console.error(`Starred releases query failed: ${compact.message}`);
+      throw compact;
+    });
 };
 
 const describeError = (error: unknown): string => {
-  if (typeof error === "object" && error !== null) {
-    if (
-      "errors" in error &&
-      Array.isArray(error.errors) &&
-      error.errors.some(
-        (e) =>
-          typeof e === "object" &&
-          e !== null &&
-          "type" in e &&
-          e.type === "RATE_LIMITED",
-      )
-    ) {
-      return "The GitHub API rate limit has been exceeded. Wait a bit before trying again.";
-    }
+  const message = error instanceof Error ? error.message : "";
 
-    if ("status" in error && error.status === 401) {
-      return "GitHub rejected the saved token — it may have expired or been revoked.";
-    }
+  if (message.includes("RATE_LIMITED")) {
+    return "The GitHub API rate limit has been exceeded. Wait a bit before trying again.";
+  }
+
+  if (message.includes("RESOURCE_LIMITS_EXCEEDED")) {
+    return "GitHub refused the query because it was too expensive. Try again — if this keeps happening, please open an issue.";
+  }
+
+  if (message.includes("github-http-error:401")) {
+    return "GitHub rejected the saved token — it may have expired or been revoked.";
   }
 
   return "Fetching releases from GitHub failed. Try again in a moment.";
