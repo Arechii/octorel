@@ -29,38 +29,46 @@ export type Release = {
   reactions: { content: string; count: number }[];
 };
 
+/**
+ * Fields that GitHub failed to resolve within its resource limits come back
+ * as null alongside per-field errors, so everything below the connection
+ * root is typed as potentially missing.
+ */
 type StarredPage = {
   viewer: {
     starredRepositories: {
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-      nodes: ({
-        id: string;
-        name: string;
-        nameWithOwner: string;
-        url: string;
-        owner: { login: string; avatarUrl: string };
-        releases: {
-          nodes: {
-            name: string | null;
+      pageInfo: { hasNextPage: boolean; endCursor: string | null } | null;
+      nodes:
+        | ({
+            id: string;
+            name: string;
+            nameWithOwner: string;
             url: string;
-            description: string | null;
-            createdAt: string;
-            publishedAt: string | null;
-            isDraft: boolean;
-            isPrerelease: boolean;
-            reactionGroups: {
-              content: string;
-              reactors: { totalCount: number };
-            }[];
-          }[];
-        };
-      } | null)[];
-    };
+            owner: { login: string; avatarUrl: string };
+            latestRelease: {
+              name: string | null;
+              url: string;
+              description: string | null;
+              createdAt: string;
+              publishedAt: string | null;
+              isPrerelease: boolean;
+              reactionGroups:
+                | {
+                    content: string;
+                    reactors: { totalCount: number } | null;
+                  }[]
+                | null;
+            } | null;
+          } | null)[]
+        | null;
+    } | null;
   };
 };
 
 type StarredRepository = NonNullable<
-  StarredPage["viewer"]["starredRepositories"]["nodes"][number]
+  NonNullable<
+    NonNullable<StarredPage["viewer"]["starredRepositories"]>["nodes"]
+  >[number]
 >;
 
 /**
@@ -112,7 +120,7 @@ const getStarredPage = async (token: string, cursor: string | null) => {
       query starredWithReleases($cursor: String) {
         viewer {
           starredRepositories(
-            first: 100
+            first: 50
             after: $cursor
             orderBy: { field: STARRED_AT, direction: DESC }
           ) {
@@ -129,20 +137,17 @@ const getStarredPage = async (token: string, cursor: string | null) => {
                 login
                 avatarUrl
               }
-              releases(first: 3, orderBy: { field: CREATED_AT, direction: DESC }) {
-                nodes {
-                  name
-                  url
-                  description
-                  createdAt
-                  publishedAt
-                  isDraft
-                  isPrerelease
-                  reactionGroups {
-                    content
-                    reactors(first: 1) {
-                      totalCount
-                    }
+              latestRelease {
+                name
+                url
+                description
+                createdAt
+                publishedAt
+                isPrerelease
+                reactionGroups {
+                  content
+                  reactors(first: 1) {
+                    totalCount
                   }
                 }
               }
@@ -155,6 +160,20 @@ const getStarredPage = async (token: string, cursor: string | null) => {
     )
     .catch((error: unknown) => {
       const compact = toCompactError(error);
+
+      // GitHub resolves what it can within its resource limits and reports
+      // per-field errors for the rest. Keep the partial page (failed fields
+      // are null) instead of failing the whole feed.
+      if (typeof error === "object" && error !== null && "data" in error) {
+        const data = error.data as StarredPage | null | undefined;
+        if (data?.viewer?.starredRepositories?.nodes) {
+          console.error(
+            `Starred releases query partially failed: ${compact.message}`,
+          );
+          return data;
+        }
+      }
+
       console.error(`Starred releases query failed: ${compact.message}`);
       throw compact;
     });
@@ -181,7 +200,7 @@ const describeError = (error: unknown): string => {
 const toLatestRelease = (
   node: StarredRepository,
 ): { repository: Repository; release: Release | null } => {
-  const release = node.releases.nodes.find((r) => !r.isDraft);
+  const release = node.latestRelease;
 
   return {
     repository: {
@@ -199,9 +218,9 @@ const toLatestRelease = (
           createdAt: release.createdAt,
           publishedAt: release.publishedAt,
           isPrerelease: release.isPrerelease,
-          reactions: release.reactionGroups.map((g) => ({
+          reactions: (release.reactionGroups ?? []).map((g) => ({
             content: g.content,
-            count: g.reactors.totalCount,
+            count: g.reactors?.totalCount ?? 0,
           })),
         }
       : null,
@@ -235,9 +254,11 @@ export const Releases = async ({ token }: { token: string }) => {
 
     do {
       const page: StarredPage = await getStarredPage(token, cursor);
-      const { nodes, pageInfo } = page.viewer.starredRepositories;
-      starred.push(...nodes.filter((n) => n !== null));
-      cursor = pageInfo.hasNextPage ? pageInfo.endCursor : null;
+      const connection = page.viewer.starredRepositories;
+      starred.push(...(connection?.nodes ?? []).filter((n) => n !== null));
+      cursor = connection?.pageInfo?.hasNextPage
+        ? connection.pageInfo.endCursor
+        : null;
     } while (cursor);
   } catch (error) {
     return (
